@@ -1,18 +1,20 @@
+import pandas as pd
+
 def leitura_dados_ga(dados, experimento):
-    import pandas as pd
-
- 
     df = pd.read_csv(dados, skiprows=7)
-    df = df.drop('Total geral', axis=1)
+    if 'Total geral' in df.columns:
+        df = df.drop('Total geral', axis=1)
+
     df = df.rename(columns={'Unnamed: 0': 'variante'})
-    df.columns.values[1] = 'Ocorrências'
+    if len(df.columns) > 1:
+        df.columns.values[1] = 'Ocorrências'
+    
+    variantes_validas = [f"{experimento}_a", f"{experimento}_b", f"{experimento}_c"]
 
-
-    df['variante'] = df['variante'].apply(
-        lambda x: f"{experimento}_a" if f"{experimento}_a" in x else
-        (f"{experimento}_b" if f"{experimento}_b" in x else None)
+    df['variante'] = df['variante'].str.lower().apply(
+        lambda x: next((v for v in variantes_validas if v in x.lower()), x)
     )
     
-    df = df.groupby('variante').sum().reset_index()
+    df = df.groupby('variante', as_index=False).sum()
 
     return df
